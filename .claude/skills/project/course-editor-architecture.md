@@ -1,10 +1,11 @@
-# Skill: Course Editor Architecture
+---
+name: Course Editor Architecture
 
-The editor is a separate mode/app within the same project — it manipulates
+description: The editor is a separate mode/app within the same project — it manipulates
 the same data model defined in `course-data-schema.md`, and should reuse
 the Phase 3 loader for previewing, rather than maintaining a second
 parallel rendering path.
-
+--- 
 ## 1. Tool modes
 
 Structure the editor as a set of discrete, mutually exclusive tool
