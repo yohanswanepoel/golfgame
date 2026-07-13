@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "babylonjs": {
+      "source": "curiosity-ai-bv/babylonjs-skill",
+      "sourceType": "github",
+      "skillPath": "BabylonJS/SKILL.md",
+      "computedHash": "9db07c132c106d0d4e6ceff988118d34fe6085138b1688b04d979cbd12d93dfb"
+    },
+    "babylonjs-engine": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/babylonjs-engine/SKILL.md",
+      "computedHash": "8a3ca92ec7e885e3323473031c7d6f08338d5df7c0e0b9b199635f49094e96a3"
+    }
+  }
+}
