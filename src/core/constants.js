@@ -49,6 +49,7 @@ export const FLIGHT = {
   STOP_VELOCITY_THRESHOLD: 0.14, // how fast to stop 0.15
 };
 
+export const CAMERA_FOLLOW_DELAY_SECONDS = 0.5;
 export const DISTANCE_TO_VELOCITY_CONST = FLIGHT.DISTANCE_TO_VELOCITY_CONST;
 
 // ---- Club re-exports (from clubs.js) ----

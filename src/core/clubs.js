@@ -104,7 +104,7 @@ export const CLUBS = [
   {
     id: "iron9",
     displayName: "9-Iron",
-    maxDistance: 215,  // 125 meters
+    maxDistance: 230,  // 125 meters
     maxBackspin: 157,
     spinFactor: 5.8,
     launchVelocityMultiplier: 0.48,
@@ -114,7 +114,7 @@ export const CLUBS = [
   {
     id: "wedgeP",
     displayName: "Pitching Wedge",
-    maxDistance: 205,  // 110 meters
+    maxDistance: 220,  // 110 meters
     maxBackspin: 165,
     spinFactor: 6.3,
     launchVelocityMultiplier: 0.40,
@@ -124,9 +124,9 @@ export const CLUBS = [
   {
     id: "wedgeS",
     displayName: "Sand Wedge",
-    maxDistance: 170,  // 85 meters
-    maxBackspin: 175,
-    spinFactor: 6.7,
+    maxDistance: 195,  // 90 meters
+    maxBackspin: 172,
+    spinFactor: 6.5,
     launchVelocityMultiplier: 0.32,
     launchAngleDeg: 40,
     isAirborneCapable: true,

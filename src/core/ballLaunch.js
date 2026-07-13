@@ -34,6 +34,8 @@ export class BallLauncher {
     /** @type {number} — sidespin sign: +1 = slice (curve right), -1 = hook (curve left) */
     this._sidespinSign = 0;
     this._stopThreshold = stopThreshold ?? FLIGHT.STOP_VELOCITY_THRESHOLD;
+    /** @type {string|null} — club id used for this shot */
+    this._shotClub = null;
   }
 
   /* ── Public getters ───────────────────────────────────────────────── */
@@ -51,6 +53,21 @@ export class BallLauncher {
   /** Launch position in world space (set on launch). */
   get launchPosition() {
     return this._launchPos;
+  }
+
+  /** Club id used for the current shot (set on launch). */
+  get shotClub() {
+    return this._shotClub;
+  }
+
+  /** Backspin magnitude from the current shot. */
+  get backspin() {
+    return this._backspinMagnitude;
+  }
+
+  /** Sidespin magnitude from the current shot. */
+  get sidespin() {
+    return this._sidespinMagnitude;
   }
 
   /**
@@ -116,6 +133,7 @@ export class BallLauncher {
     this._sidespinSign = horizontalDeviation >= 0 ? 1 : -1;
 
     // ---- Phase tracking ----
+    this._shotClub = club.id;
     this._launchPos = ball.position.clone();
     this._phase = "airborne";
 
@@ -132,6 +150,7 @@ export class BallLauncher {
    */
   launchPutter(result, ball, ballBody, aimDirection) {
     const { launchParams } = result;
+    const club = getClubById(result.club);
     const speed = launchParams.speed;
 
     // Zero any residual state
@@ -152,6 +171,7 @@ export class BallLauncher {
     this._backspinMagnitude = 0;
     this._sidespinMagnitude = 0;
     this._sidespinSign = 0;
+    this._shotClub = club.id;
     this._launchPos = ball.position.clone();
     this._phase = "rolled";
 
@@ -203,13 +223,13 @@ export class BallLauncher {
       if (this._frameCount % 30 === 0) {
         const totalForce = liftMag + curveMag;
         const horizSpd = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
-        console.log(
-          `[BallFlight] spd=${currentSpeed.toFixed(1)} m/s (horiz=${horizSpd.toFixed(1)}) ` +
-          `| lift=${liftMag.toFixed(4)} curve=${curveMag.toFixed(4)} total=${totalForce.toFixed(4)} ` +
-          `| liftConst=${FLIGHT.LIFT_CONST} curveConst=${FLIGHT.CURVE_CONST} ` +
-          `| backspin=${this._backspinMagnitude.toFixed(1)} sidespin=${this._sidespinMagnitude.toFixed(1)} ` +
-          `| pos=(${ball.position.x.toFixed(1)},${ball.position.y.toFixed(2)},${ball.position.z.toFixed(1)})`,
-        );
+        // console.log(
+        //   `[BallFlight] spd=${currentSpeed.toFixed(1)} m/s (horiz=${horizSpd.toFixed(1)}) ` +
+        //   `| lift=${liftMag.toFixed(4)} curve=${curveMag.toFixed(4)} total=${totalForce.toFixed(4)} ` +
+        //   `| liftConst=${FLIGHT.LIFT_CONST} curveConst=${FLIGHT.CURVE_CONST} ` +
+        //   `| backspin=${this._backspinMagnitude.toFixed(1)} sidespin=${this._sidespinMagnitude.toFixed(1)} ` +
+        //   `| pos=(${ball.position.x.toFixed(1)},${ball.position.y.toFixed(2)},${ball.position.z.toFixed(1)})`,
+        // );
       }
       const horizVelX = vel.x;
       const horizVelZ = vel.z;

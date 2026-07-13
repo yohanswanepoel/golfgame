@@ -193,7 +193,7 @@ Modify `src/scenes/drivingRange.js` to bring together `swing.js`, `clubs.js`, `b
    - Create a simple HTML `<div>` overlay positioned over the canvas displaying real-time values:
      - Active swing stage, power %, and accuracy offset.
      - Active club name.
-     - Last shot's launch speed, angle, and calculated spin curve.
+     - Last shot's launch speed, angle, height and calculated spin curve.
      - Current live ball velocity vector and state (`AIRBORNE`, `ROLLING`, or `AT_REST`).
 
 3. **Wiring**:

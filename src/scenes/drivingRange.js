@@ -17,6 +17,7 @@ import {
 import { createDistanceBoards } from "../core/distanceBoards.js";
 import { createTeeArea } from "../core/teeArea.js";
 import { createGolferSprite, HANDEDNESS } from "../golfer/golferSprite.js";
+import { CAMERA_FOLLOW_DELAY_SECONDS, DISTANCE_TO_VELOCITY_CONST } from "../core/constants.js";
 
 import {
   AdvancedDynamicTexture,
@@ -31,6 +32,7 @@ const domHud = {
   get club() { return document.getElementById("hud-club"); },
   get distance() { return document.getElementById("hud-distance"); },
   get shots() { return document.getElementById("hud-shots"); },
+  get maxHeight() { return document.getElementById("hud-maxheight"); },
   get aim() { return document.getElementById("hud-aim"); },
 };
 import {
@@ -45,7 +47,9 @@ import { createBallLauncher } from "../core/ballLaunch.js";
  */
 export async function createDrivingRangeScene(engine, canvas) {
   const scene = new Scene(engine);
-
+  // scene.debugLayer.show({
+  //     embedMode: true // Optional: embeds it on the side of your canvas
+  // });
   // ---- Camera ----
   // Camera starts behind the ball, looking toward +Z (down the fairway).
   // alpha controls horizontal rotation (aim), beta controls elevation.
@@ -186,8 +190,10 @@ export async function createDrivingRangeScene(engine, canvas) {
   let selectedClubId = "driver";
   let shotCount = 0;
   let distanceTraveled = 0;
+  let maxHeight = 0;
+  let shotLogged = false;
 
-  const CAMERA_FOLLOW_DELAY_SECONDS = 1; // tune to taste
+   // tune to taste
   let followDelayTimer = 0;
 
   // ---- Ball Launcher (Phase 1 Task 3) ----
@@ -196,7 +202,6 @@ export async function createDrivingRangeScene(engine, canvas) {
   // ---- Swing Meter ----
   const swingMeter = createSwingMeter(scene, {
     onSwingComplete(result) {
-      // console.log("[Phase 1] Swing result:", result);
       // Re-enable gravity so the ball flies and falls
       // ballAggregate.body.setGravityFactor(1);
       followDelayTimer = CAMERA_FOLLOW_DELAY_SECONDS;
@@ -234,9 +239,9 @@ export async function createDrivingRangeScene(engine, canvas) {
   gui.horizontalOffset = 0;
 
   const clubPanel = new StackPanel();
-  clubPanel.horizontalAlignment = 0; // LEFT
+  clubPanel.horizontalAlignment = 0; // LEFT = 0 RIGHT = 1
   clubPanel.verticalAlignment = 0; // TOP
-  clubPanel.top = "10px";
+  clubPanel.top = "80px";
   clubPanel.width = "200px";
   gui.addControl(clubPanel);
 
@@ -283,7 +288,7 @@ export async function createDrivingRangeScene(engine, canvas) {
   const resetPanel = new StackPanel();
   resetPanel.horizontalAlignment = 0;
   resetPanel.verticalAlignment = 0;
-  resetPanel.top = "220px";
+  resetPanel.top = "20px";
   resetPanel.width = "200px";
   gui.addControl(resetPanel);
 
@@ -294,21 +299,24 @@ export async function createDrivingRangeScene(engine, canvas) {
   resetBtn.cornerRadius = 6;
   resetBtn.margin = "8px 0";
   resetBtn.thickness = 2;
-  resetBtn.paddingBottom = "2px";
+  resetBtn.paddingBottom = "10px";
   resetPanel.addControl(resetBtn);
 
-  const resetBtn2 = Button.CreateSimpleButton("reset2", "[Space] → swing  |  [←→] aim  |  [1-3] club");
-  resetBtn2.width = "100%";
-  resetBtn2.height = "34px";
-  resetBtn2.color = "#aaa";
-  resetBtn2.isHitTestVisible = false;
-  resetBtn2.cornerRadius = 6;
-  resetBtn2.margin = "4px 0";
-  resetBtn2.thickness = 0;
-  resetPanel.addControl(resetBtn2);
+  const testBtn = Button.CreateSimpleButton("test", "🚀 Test Launch 100%");
+  testBtn.width = "100%";
+  testBtn.height = "34px";
+  testBtn.color = "white";
+  testBtn.background = "#4CAF50";
+  testBtn.cornerRadius = 6;
+  testBtn.margin = "4px 0";
+  testBtn.thickness = 2;
+  testBtn.paddingBottom = "10px";
+  resetPanel.addControl(testBtn);
 
   function resetBall() {
     ballLauncher.reset();
+    maxHeight = 0;
+    shotLogged = false;
 
     // Zero velocities first
     ballAggregate.body.setLinearVelocity(Vector3.Zero());
@@ -339,6 +347,59 @@ export async function createDrivingRangeScene(engine, canvas) {
   }
 
   resetBtn.onPointerDownObservable.add(() => resetBall());
+
+
+  function testLaunch() {
+    followDelayTimer = CAMERA_FOLLOW_DELAY_SECONDS;
+    maxHeight = 0;
+    shotLogged = false;
+
+    const aimDir = camera.getDirection(new Vector3(0, 0, 1));
+    aimDir.y = 0;
+    aimDir.normalize();
+
+    const club = CLUBS_MAP[selectedClubId];
+    const speed = club.maxDistance * 1.0 * DISTANCE_TO_VELOCITY_CONST;
+    const aimAngleRad = camera.alpha;
+
+    if (selectedClubId === "putter") {
+      ballLauncher.launchPutter(
+        {
+          club: selectedClubId,
+          aimAngle: aimAngleRad,
+          launchParams: {
+            speed: club.maxDistance * 1.0 * DISTANCE_TO_VELOCITY_CONST * SWING.putterPowerScale,
+            launchAngle: 0,
+            horizontalDeviation: 0,
+            spinFactor: 0,
+          },
+        },
+        ball,
+        ballAggregate.body,
+        aimDir,
+      );
+    } else {
+      ballLauncher.launch(
+        {
+          club: selectedClubId,
+          aimAngle: aimAngleRad,
+          launchParams: {
+            speed,
+            launchAngle: club.launchAngleDeg,
+            horizontalDeviation: 0, // perfect accuracy = 0 deviation
+            spinFactor: club.spinFactor,
+            lift: SWING.liftConst,
+            curve: 0,
+          },
+        },
+        ball,
+        ballAggregate.body,
+        aimDir,
+      );
+    }
+  }
+
+  testBtn.onPointerDownObservable.add(() => testLaunch());
 
   // ---- Keyboard Handler ----
   scene.onKeyboardObservable.add((kbInfo) => {
@@ -410,10 +471,18 @@ export async function createDrivingRangeScene(engine, canvas) {
     // ---- Debug: log distance + speed each frame ----
     if (shotCount > 0 || ballLauncher.isAirborne) {
       const d = ballLauncher.distanceTraveled(ball.position);
-      if (Math.abs(d - distanceTraveled) > 0.001) {
-        console.log(`[Shot] spd=${speed.toFixed(1)} m/s | dist=${d.toFixed(1)}m | h=${ball.position.y.toFixed(2)}m | phase=${ballLauncher.phase}`);
-      }
+      // if (Math.abs(d - distanceTraveled) > 0.001) {
+      //   console.log(`[Shot] spd=${speed.toFixed(1)} m/s | dist=${d.toFixed(1)}m | h=${ball.position.y.toFixed(2)}m | phase=${ballLauncher.phase}`);
+      // }
       distanceTraveled = d;
+    }
+
+    // ---- Track max height ----
+    if (ballLauncher.isAirborne || ballLauncher.phase === "rolled") {
+      const ballY = ball.position.y;
+      if (ballY > maxHeight) {
+        maxHeight = ballY;
+      }
     }
 
     if (ballLauncher.isAirborne) {
@@ -432,6 +501,17 @@ export async function createDrivingRangeScene(engine, canvas) {
       // const { stopped } = ballLauncher.updateStopped(ball, ballAggregate.body);
       const { stopped } = ballLauncher.updateStopped(ball, ballAggregate.body, engine.getDeltaTime());
       shotStopped = stopped;
+
+      if (stopped && !shotLogged) {
+        shotLogged = true;
+        const club = CLUBS_MAP[ballLauncher.shotClub];
+        const spinType = ballLauncher.sidespin > 0.1
+          ? `sidespin ${ballLauncher.sidespin.toFixed(1)} (${ballLauncher._sidespinSign > 0 ? 'hook' : 'slice'})`
+          : ballLauncher.backspin > 0.1
+            ? `backspin ${ballLauncher.backspin.toFixed(1)}`
+            : "minimal";
+        console.log(`[Shot Result] Club: ${club?.displayName ?? ballLauncher.shotClub} | Distance: ${distanceTraveled.toFixed(1)}m | Max Height: ${maxHeight.toFixed(1)}m | Spin: ${spinType}`);
+      }
     } else if (ballLauncher.phase === null && shotCount > 0) {
       // Ball fully stopped after a shot (transitioned from rolled → null)
       // No action needed — state already updated by updateStopped
@@ -449,6 +529,9 @@ export async function createDrivingRangeScene(engine, canvas) {
         : "—";
     }
     if (domHud.shots) domHud.shots.textContent = `Shots: ${shotCount}`;
+    if (domHud.maxHeight) {
+      domHud.maxHeight.textContent = maxHeight > 0 ? `Max height: ${maxHeight.toFixed(1)}m` : "—";
+    }
     if (domHud.aim) domHud.aim.textContent = `Aim: ${aimAngleDeg.toFixed(0)}°`;
 
     // ---- Camera follow (follow while ball is airborne or just landed) ----
